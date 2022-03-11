@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="outputjson" format="json">
+      <types:shape format="weave" example="examples/accounts.json"><![CDATA[%dw 2.0
+
+type outputjson = Array<{|  id: String,   name: String,   "type": String,   address: String,   air_miles: Number {"typeId": "int"},   created_at: String|}> {"example": "[{\\\"id\\\":\\\"4400\\\",\\\"name\\\":\\\"Mat Siva\\\",\\\"type\\\":\\\"business\\\",\\\"address\\\":\\\"12345 Green,Boulder,Colorado,82433,USA\\\",\\\"air_miles\\\":119093,\\\"created_at\\\":\\\"2017-10-21T22:54:36\\\"},{\\\"id\\\":\\\"4401\\\",\\\"name\\\":\\\"Rajesh Patil\\\",\\\"type\\\":\\\"personal\\\",\\\"address\\\":\\\"89 Nibm Road,Pune,Maharashtra,59141,India\\\",\\\"air_miles\\\":36470,\\\"created_at\\\":\\\"2017-08-23T00:52:42\\\"}]"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#73a315b6-4150-4f66-a7cc-c90bf4dc8532">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="outputjson"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

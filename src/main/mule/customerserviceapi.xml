@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<flow name="customerserviceapiFlow" doc:id="dc92343d-4b9f-429f-a8ff-131a38c3b212" >
+		<http:listener doc:name="Listener" doc:id="12809407-a11e-4b0a-ac17-b42cc3d456ce" config-ref="HTTP_Listener_config" path="/custService"/>
+		<logger level="INFO" doc:name="Logger" doc:id="a3826141-f31d-493e-96a3-bdf4f65ed074" message="#[attributes]"/>
+		<ee:transform doc:name="Transform Message" doc:id="532212cd-5099-4a78-bbf2-2aaeef9fbb7d" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="HeaderData" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"client_id" : attributes.headers.'client_id',
+	"client_secret" : attributes.headers.'client_secret',
+	"accountid":attributes.queryParams.'accountid',
+	"accountName":attributes.queryParams.'accountname'
+
+	
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="5a3f6ed9-7e09-4fe3-be7a-571f76c5839d" >
+			<when expression="#[vars.HeaderData.accountid != null]">
+				<http:request method="GET" doc:name="Copy_of_Request" doc:id="bc0b8b3c-410c-4a90-9f30-55ffe9183230" config-ref="HTTP_Request_configuration" path="/accounts/{id}" >
+					<http:headers ><![CDATA[#[output application/java
+---
+{
+	"client_secret" : vars.HeaderData.'client_secret',
+	"client_id" : vars.HeaderData.'client_id'
+}]]]></http:headers>
+					<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"id" : vars.HeaderData.accountid
+}]]]></http:uri-params>
+				</http:request>
+			</when>
+			<otherwise >
+				<http:request method="GET" doc:name="Request" doc:id="5b72c001-c818-44ab-ac35-4221b08ffbb2" config-ref="HTTP_Request_configuration" path="/accounts" outputMimeType="application/json">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"client_secret" : 'a0A5A66F9C0146269A0fAF34847Ad43d',
+	"client_id" : 'fdf2f9ee126f48bbb073c9c2c26ff022'
+}]]]></http:headers>
+		</http:request>
+				<logger level="INFO" doc:name="Logger" doc:id="005bb2c4-68d3-4510-a967-16e6037de493" message="#[typeOf(payload)]" />
+				<choice doc:name="Choice" doc:id="10ac6718-e07b-401b-9c49-9692d8340cf7" >
+					<when expression="#[vars.HeaderData.accountName != null]">
+						<ee:transform doc:name="Transform Message" doc:id="73a315b6-4150-4f66-a7cc-c90bf4dc8532">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload filter $.name == vars.HeaderData.accountName]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+					</when>
+					<otherwise >
+						<logger level="INFO" doc:name="Logger" doc:id="d1e279aa-75c1-47d0-99fd-9683c6616f34" message="#[payload]"/>
+					</otherwise>
+				</choice>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>
